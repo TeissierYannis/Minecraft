@@ -35,7 +35,6 @@ public class World {
         List<ChunkCoordinates> chunkCoordinates = heightmap.splitHeightmap(Chunk.getChunkSize());
 
         System.out.println("\nGenerating chunks... [" + chunkCoordinates.size() + " chunks]");
-
         int i = 0;
         ProgressBar pb = new ProgressBar("Generating chunks", chunkCoordinates.size());
         for (ChunkCoordinates coords : chunkCoordinates) {

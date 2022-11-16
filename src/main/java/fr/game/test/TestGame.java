@@ -75,14 +75,14 @@ public class TestGame implements ILogic {
 
         //sceneManager.addEntity(c);
 
-       /* for (Chunk chunk : world.getChunks()) {
+       for (Chunk chunk : world.getChunks()) {
             Model model = chunk.getModel();
             if (model != null) {
                 model.setTexture(dirtTexture);
                 Entity c = new Entity(model, new Vector3f(chunk.getCoords().getBottomLeft().x, 0, chunk.getCoords().getBottomLeft().y), new Vector3f(0, 0, 0), 1);
                 sceneManager.addEntity(c);
             }
-        }*/
+        }
 
         //Model model = loader.loadOBJModelFromFile("/models/baseCube.obj");
 

@@ -69,8 +69,6 @@ public class Heightmap {
         }
 
         // Draw an bmp image of the chunks coordinates (debug)
-        drawChunksCoords(chunksCoords, size);
-
         return chunksCoords;
     }
 
@@ -215,6 +213,7 @@ public class Heightmap {
         return chunk;
     }
 
+    @Deprecated
     private void drawChunksCoords(List<ChunkCoordinates> chunksCoords, int size) {
         BufferedImage image = new BufferedImage(World.WORLD_SIZE, World.WORLD_SIZE, BufferedImage.TYPE_INT_RGB);
 

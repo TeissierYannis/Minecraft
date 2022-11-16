@@ -25,12 +25,13 @@ public class ShaderManager {
     private final Map<String, Integer> uniforms;
 
     public ShaderManager() throws Exception {
+        // echo memory already used
+        Logger.getGlobal().info("ShaderManager: Memory used: " + (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024 / 1024 + "MB");
+
         programID = GL20.glCreateProgram();
         if(programID == 0) {
             // Log detailed error message
-            Logger.getGlobal().severe("Could not create Shader" + glGetError() + " " + GL20.glGetProgramInfoLog(programID) + " " + programID);
-            System.out.println(glGetError() );
-            throw new Exception("Could not create shader" + GL20.glGetProgramInfoLog(programID, 1024));
+            throw new Exception("Could not create shader" + GL20.glGetProgramInfoLog(programID, 1024) + " " + glGetError());
         }
 
         uniforms = new HashMap<>();
