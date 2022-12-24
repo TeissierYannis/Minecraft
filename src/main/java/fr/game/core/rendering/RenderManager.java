@@ -67,7 +67,7 @@ public class RenderManager {
             window.setResize(true);
         }
 
-        entityRenderer.renderEntitiesInRadius(camera, 1f, sceneManager.getDirectionalLight(), sceneManager.getPointLights(), sceneManager.getSpotLights());
+        entityRenderer.renderEntitiesInRadius(camera, 30f, sceneManager.getDirectionalLight(), sceneManager.getPointLights(), sceneManager.getSpotLights());
         terrainRenderer.render(camera, sceneManager.getDirectionalLight(), sceneManager.getPointLights(), sceneManager.getSpotLights());
     }
 

@@ -1,22 +1,15 @@
 package fr.game.core.entity.terrain;
 
 import fr.game.core.ObjectLoader;
-import fr.game.core.entity.Entity;
 import fr.game.core.entity.Model;
-import fr.game.core.entity.SceneManager;
 import fr.game.core.entity.Texture;
 import fr.game.core.maths.BaseCube;
-import fr.game.core.maths.ExecutionMeasure;
 import fr.game.core.maths.Heightmap;
-import fr.game.test.Launcher;
-import fr.game.test.TestGame;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
-
-import static org.lwjgl.glfw.GLFW.glfwMakeContextCurrent;
 
 public class Chunk {
     private static final int CHUNK_SIZE = 16;
@@ -61,6 +54,29 @@ public class Chunk {
     }
 
     public void generateModel(List<Vector3f> positions) throws Exception {
+        // Stockez chaque modèle de bloc dans une liste
+        List<Model> blockModels = new ArrayList<>();
+        for (Vector3f position : positions) {
+            // Générez un modèle pour chaque position de bloc
+            BaseCube bc = new BaseCube();
+            List<Vector3f> pos = new ArrayList<>() {{
+                add(position);
+            }};
+            Model blockModel = bc.generate(pos);
+            blockModels.add(blockModel);
+        }
+
+        // Chargez la texture et appliquez-la à chaque modèle de bloc
+        ObjectLoader loader = new ObjectLoader();
+        int textureID = loader.loadTexture("textures/dirt_block.png");
+        Texture dirtTexture = new Texture(textureID);
+        for (Model blockModel : blockModels) {
+            blockModel.setTexture(dirtTexture);
+        }
+    }
+
+    /*
+    public void generateModel(List<Vector3f> positions) throws Exception {
         // check if the position is a cube
         if (positions.size() > 0) {
             BaseCube bc = new BaseCube();
@@ -71,7 +87,7 @@ public class Chunk {
         int textureID = loader.loadTexture("textures/dirt_block.png");
         Texture dirtTexture = new Texture(textureID);
         model.setTexture(dirtTexture);
-    }
+    }*/
 
     public static int getChunkSize() {
         return CHUNK_SIZE;

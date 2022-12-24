@@ -74,6 +74,7 @@ public class EntityRenderer implements IRenderer {
             bind(model);
             for (Entity e : entities.get(model)) {
                 // Calculez la distance entre la position de l'entité et la position de la caméra
+                // TODO : La distance du chunk est en bas à gauche, ce qui signifie que si l'on monte trop la caméra, on ne verra pas les entités
                 float distance = e.getPosition().distance(camera.getPosition());
                 // Si la distance est inférieure au rayon spécifié, effectuez le rendu de l'entité
                 if (distance <= radius) {
