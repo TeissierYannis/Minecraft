@@ -4,9 +4,9 @@ public interface ILogic {
 
     void init() throws Exception;
 
-    void input();
+    void input() throws Exception;
 
-    void update(MouseManager mouseInput);
+    void update(MouseManager mouseInput) throws Exception;
 
     void render();
 

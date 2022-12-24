@@ -164,4 +164,17 @@ public class WindowManager {
         return matrix.setPerspective(FOV, aspectRatio, Z_NEAR, Z_FAR);
     }
 
+    public Thread getThread() {
+        return Thread.currentThread();
+    }
+
+    public void runOnMainThread(Runnable runnable) {
+        if (Thread.currentThread() == getThread()) {
+            runnable.run();
+        } else {
+            GLFW.glfwMakeContextCurrent(window);
+            runnable.run();
+            GLFW.glfwMakeContextCurrent(0);
+        }
+    }
 }

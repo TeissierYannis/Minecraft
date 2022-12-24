@@ -8,6 +8,7 @@ import fr.game.core.maths.Normal;
 import fr.game.core.maths.TextureCoords;
 import fr.game.core.maths.Vertex;
 import fr.game.core.utils.Utils;
+import fr.game.test.Launcher;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
@@ -91,6 +92,9 @@ public class ObjectLoader {
         }
 
         int[] indicesArr = indices.stream().mapToInt((Integer v) -> v).toArray();
+
+        // TODO: Verify this one
+        // from main thread
 
         return loadModel(verticesArray, texCoordArr, normalsArr, indicesArr);
     }

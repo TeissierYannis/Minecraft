@@ -1,5 +1,6 @@
 package fr.game.core.maths;
 
+import fr.game.core.entity.terrain.Chunk;
 import fr.game.core.entity.terrain.ChunkCoordinates;
 import fr.game.core.entity.terrain.World;
 import org.joml.Vector2f;
@@ -53,22 +54,60 @@ public class Heightmap {
         }
     }
 
-    public List<ChunkCoordinates> splitHeightmap(int size) {
-        // Split heightmap into chunks (square of size size)
-        List<ChunkCoordinates> chunksCoords = new ArrayList<>();
-        for (int i = 0; i < MAP_SIZE; i += size) {
-            for (int j = 0; j < MAP_SIZE; j += size) {
-                // from (i, j) to (MAP_SIZE, MAP_SIZE  )
-                Vector2f bottomLeft = new Vector2f(i, j);
-                Vector2f bottomRight = new Vector2f(i + size, j);
-                Vector2f topLeft = new Vector2f(i, j + size);
-                Vector2f topRight = new Vector2f(i + size, j + size);
+    public ChunkCoordinates[][] splitHeightmapGFS(int size) {
+        ChunkCoordinates[][] result = new ChunkCoordinates[(MAP_SIZE / size) + 1][(MAP_SIZE / size) + 1];
 
-                chunksCoords.add(new ChunkCoordinates(bottomLeft, bottomRight, topLeft, topRight));
+        int chunkIndexX = 0, chunkIndexZ = 0;
+        for (int x = 0; x < MAP_SIZE; x += size) {
+            for (int z = 0; z < MAP_SIZE; z += size) {
+                result[chunkIndexX][chunkIndexZ] = new ChunkCoordinates(
+                        new Vector2f(x, z),
+                        new Vector2f(x + size, z),
+                        new Vector2f(x, z + size),
+                        new Vector2f(x + size, z + size)
+                );
+                chunkIndexZ++;
+            }
+            chunkIndexZ = 0;
+            chunkIndexX++;
+        }
+
+        return result;
+    }
+
+    /**
+     * @param size
+     * @return
+     * @deprecated
+     */
+    public ChunkCoordinates[] splitHeightmap(int size) {
+        // Split heightmap into chunks (square of size * size)
+
+        /**
+         *  chunksCoords[x * z] = new ChunkCoordinates(
+         *                         new Vector2f(x, z),
+         *                         new Vector2f(xMax, z),
+         *                         new Vector2f(x, zMax),
+         *                         new Vector2f(xMax, zMax)
+         *                 );
+         */
+        ChunkCoordinates[] chunksCoords = new ChunkCoordinates[(MAP_SIZE * MAP_SIZE) / size];
+        int i = 0, j = 0;
+        // TODO : Rework this ! (it's ugly) and it doesn't work
+        for (int x = 0; x < MAP_SIZE; x += size) {
+            for (int z = 0; z < MAP_SIZE; z += size) {
+                chunksCoords[i] = new ChunkCoordinates(
+                        new Vector2f(x, z),
+                        new Vector2f(x + size, z),
+                        new Vector2f(x, z + size),
+                        new Vector2f(x + size, z + size)
+                );
+                i++;
             }
         }
 
-        // Draw an bmp image of the chunks coordinates (debug)
+        this.drawChunksCoords(chunksCoords);
+
         return chunksCoords;
     }
 
@@ -196,7 +235,7 @@ public class Heightmap {
         // TODO
     }
 
-    public int[][] getChunk(ChunkCoordinates coords) throws Exception{
+    public int[][] getChunk(ChunkCoordinates coords) throws Exception {
         int[][] chunk = new int[CHUNK_WIDTH][CHUNK_WIDTH];
         int i;
         int j;
@@ -213,20 +252,31 @@ public class Heightmap {
         return chunk;
     }
 
-    @Deprecated
-    private void drawChunksCoords(List<ChunkCoordinates> chunksCoords, int size) {
-        BufferedImage image = new BufferedImage(World.WORLD_SIZE, World.WORLD_SIZE, BufferedImage.TYPE_INT_RGB);
+    private void drawChunksCoords(ChunkCoordinates[] chunksCoords) {
+        int x;
+        int y;
 
-        Graphics2D g2d = image.createGraphics();
-        g2d.setColor(Color.BLACK);
-        g2d.fillRect(0, 0, World.WORLD_SIZE, World.WORLD_SIZE);
-        g2d.setColor(Color.WHITE);
+        // Save as bmp
+        int i = 0;
+        BufferedImage image = new BufferedImage((MAP_SIZE * 16) / 4, (MAP_SIZE * 16) / 4, BufferedImage.TYPE_INT_RGB);
         for (ChunkCoordinates coords : chunksCoords) {
-            g2d.drawRect((int) coords.getBottomLeft().x, (int) coords.getBottomLeft().y, size, size);
+            if (coords == null)
+                continue;
+            for (x = (int) coords.getBottomLeft().x; x < coords.getTopRight().x; x++) {
+                for (y = (int) coords.getBottomLeft().y; y < coords.getTopRight().y; y++) {
+                    // alternate colors
+                    if (i % 2 == 0) {
+                        image.setRGB(x, y, Color.BLUE.getRGB());
+                    } else {
+                        image.setRGB(x, y, Color.RED.getRGB());
+                    }
+                }
+            }
+            i++;
         }
-        g2d.dispose();
+
         try {
-            ImageIO.write(image, "png", new File("chunks.png"));
+            ImageIO.write(image, "bmp", new File("coords.bmp"));
         } catch (IOException e) {
             e.printStackTrace();
         }

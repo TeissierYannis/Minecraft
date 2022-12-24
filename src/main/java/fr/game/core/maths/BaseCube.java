@@ -140,28 +140,50 @@ public class BaseCube {
     }
 
     public Model generate(List<Vector3f> positions) throws Exception {
+        ExecutionMeasure measure = new ExecutionMeasure();
+        // TODO : use a thread pool or something to make it faster
         String object = generateString(positions);
+        measure.stop();
+        measure.logTime("Generated " + positions.size() + " cubes in ");
 
         ObjectLoader ol = new ObjectLoader();
 
         return ol.loadOBJModelFromString(object);
     }
 
-    public String generateString(List<Vector3f> positions) {
-        String obj = "# Exported from Java\n";
-        obj += "#v (vertices) : " + vertex.length + "\n";
-        obj += "#vt (texture coords) : " + texturesCoords.length + "\n";
-        obj += "#vn (normals) : " + normals.length + "\n";
-        obj += "#f (faces) : " + faces.length + "\n";
+    /*
+    Pour accélérer la vitesse de génération d'un string en Java, vous pouvez essayer plusieurs approches différentes :
 
-        obj += "mtllib chunk.mtl\n";
-        obj += "o chunk\n";
+Utiliser un StringBuilder au lieu d'un String pour concaténer les différentes parties du string. Le StringBuilder est plus rapide que le String car il utilise un buffer interne pour stocker les données, ce qui permet d'éviter la création de nouvelles instances de String à chaque concaténation.
+
+Utiliser la méthode String.format() pour formater le string en une seule opération. Cette méthode est plus rapide que d'utiliser des opérations de concaténation pour construire le string.
+
+Utiliser des algorithmes et des structures de données efficaces pour générer le string. Par exemple, si vous devez générer un string à partir d'une liste d'éléments, vous pouvez utiliser une boucle for ou un Iterator au lieu d'une boucle foreach.
+
+Si possible, pré-allouer la mémoire nécessaire pour stocker le string généré, en utilisant la méthode StringBuilder.ensureCapacity(). Cela permet d'éviter de redimensionner le buffer interne à chaque fois que de nouvelles données sont ajoutées, ce qui peut accélérer la génération du string.
+
+Il est important de noter que la vitesse de génération d'un string en Java dépend de nombreux facteurs, dont la taille et la complexité du string, ainsi que de la performance de votre ordinateur. Vous devrez peut-être essayer plusieurs approches pour trouver celle qui convient le mieux à votre cas d'utilisation.
+     */
+    public String generateString(List<Vector3f> positions) {
+
+        StringBuilder obj = new StringBuilder("# Exported from Java\n");
+        String.format("#v (vertices) : %d\n", vertex.length);
+        String.format("#vt (texture coords) : %d\n", texturesCoords.length);
+        String.format("#vn (normals) : %d\n", normals.length);
+        String.format("#f (faces) : %d\n", faces.length);
+
+        obj.append("mtllib ").append("chunk.mtl").append("\n");
+        obj.append("o ").append("chunk").append("\n");
 
         AtomicBoolean verticesExported = new AtomicBoolean(false);
         AtomicBoolean texturesCoordsExported = new AtomicBoolean(false);
         AtomicBoolean normalsExported = new AtomicBoolean(false);
         AtomicBoolean facesExported = new AtomicBoolean(false);
 
+        StringBuilder vertexStringBuilder = new StringBuilder();
+        StringBuilder texturesCoordsStringBuilder = new StringBuilder();
+        StringBuilder normalsStringBuilder = new StringBuilder();
+        StringBuilder facesStringBuilder = new StringBuilder();
         AtomicReference<String>[] vertexString = new AtomicReference[]{new AtomicReference<>("")};
         AtomicReference<String> texturesCoordsString = new AtomicReference<>("");
         AtomicReference<String> normalsString = new AtomicReference<>("");
@@ -172,48 +194,52 @@ public class BaseCube {
                 moveVertices(position);
 
                 for (int i = 0; i < vertex.length; i += 3) {
-                    vertexString[0].set(vertexString[0].get() + "v " + vertex[i] + " " + vertex[i + 1] + " " + vertex[i + 2] + "\n");
+                    vertexStringBuilder.append("v ").append(vertex[i]).append(" ").append(vertex[i + 1]).append(" ").append(vertex[i + 2]).append("\n");
+                    //vertexString[0].set(vertexString[0].get() + "v " + vertex[i] + " " + vertex[i + 1] + " " + vertex[i + 2] + "\n");
                 }
-                vertexString[0].set(vertexString[0].get() + "\n");
+                vertexStringBuilder.append("\n");
+                //vertexString[0].set(vertexString[0].get() + "\n");
             }
+
             verticesExported.set(true);
         }).start();
         new Thread(() -> {
             for (int i = 0; i < texturesCoords.length; i += 2) {
-                texturesCoordsString.set(texturesCoordsString.get() + "vt " + texturesCoords[i] + " " + texturesCoords[i + 1] + "\n");
+                texturesCoordsStringBuilder.append("vt ").append(texturesCoords[i]).append(" ").append(texturesCoords[i + 1]).append("\n");
+                //texturesCoordsString.set(texturesCoordsString.get() + "vt " + texturesCoords[i] + " " + texturesCoords[i + 1] + "\n");
             }
-            texturesCoordsString.set(texturesCoordsString.get() + "\n");
+            texturesCoordsStringBuilder.append("\n");
+            //texturesCoordsString.set(texturesCoordsString.get() + "\n");
             texturesCoordsExported.set(true);
         }).start();
         new Thread(() -> {
             for (int i = 0; i < normals.length; i += 3) {
-                normalsString.set(normalsString.get() + "vn " + normals[i] + " " + normals[i + 1] + " " + normals[i + 2] + "\n");
+                normalsStringBuilder.append("vn ").append(normals[i]).append(" ").append(normals[i + 1]).append(" ").append(normals[i + 2]).append("\n");
+                //normalsString.set(normalsString.get() + "vn " + normals[i] + " " + normals[i + 1] + " " + normals[i + 2] + "\n");
             }
-            normalsString.set(normalsString.get() + "\n");
+            normalsStringBuilder.append("\n");
+            //normalsString.set(normalsString.get() + "\n");
             normalsExported.set(true);
         }).start();
 
         new Thread(() -> {
-            //ProgressBar bar = new ProgressBar("Generating faces", (long) positions.size() * (faces.length / 2));
-
             int offset = 1;
             int offsetFaces = 1;
             for (Vector3f position : positions) {
                 for (int i = 0; i < faces.length; i += 3) {
                     if (i % 12 == 0) {
-                        facesString.set(facesString.get() + "\ns " + offsetFaces);
-                        facesString.set(facesString.get() + "\nf ");
+                        facesStringBuilder.append("\ns ").append(offsetFaces).append("\nf ");
+                        //facesString.set(facesString.get() + "\ns " + offsetFaces);
+                        //facesString.set(facesString.get() + "\nf ");
                         offsetFaces++;
                     }
-                    facesString.set(facesString.get() + (calculateFace(offset, faces[i])) + "/" + faces[i + 1] + "/" + faces[i + 2] + " ");
-                    //bar.step();
+                    facesStringBuilder.append(calculateFace(offset, faces[i])).append("/").append(faces[i + 1]).append("/").append(faces[i + 2]).append(" ");
+                    //facesString.set(facesString.get() + (calculateFace(offset, faces[i])) + "/" + faces[i + 1] + "/" + faces[i + 2] + " ");
                 }
                 offset++;
             }
-            //bar.setExtraMessage("Done");
             facesExported.set(true);
         }).start();
-
 
         while (!verticesExported.get() || !texturesCoordsExported.get() || !normalsExported.get() || !facesExported.get()) {
             try {
@@ -225,16 +251,16 @@ public class BaseCube {
 
         // Check thread status
         if (verticesExported.get() && texturesCoordsExported.get() && normalsExported.get() && facesExported.get()) {
-            obj += vertexString[0].get();
-            obj += texturesCoordsString.get();
-            obj += normalsString.get();
-            obj += "\nusemtl Material\ns off\n";
-            obj += facesString.get();
+            obj.append(vertexStringBuilder);
+            obj.append(texturesCoordsStringBuilder);
+            obj.append(normalsStringBuilder);
+            obj.append("\nusemtl Material\ns off\n");
+            obj.append(facesStringBuilder);
         } else {
             Logger.getGlobal().warning("Exporting failed");
         }
 
-        return obj;
+        return obj.toString();
     }
 
     public int calculateFace(int offset, int face) {

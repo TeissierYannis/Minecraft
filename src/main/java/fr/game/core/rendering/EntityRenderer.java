@@ -65,6 +65,28 @@ public class EntityRenderer implements IRenderer {
         shader.unbind();
     }
 
+    public void renderEntitiesInRadius(Camera camera, float radius, DirectionalLight[] directionalLights, PointLight[] pointLights, SpotLight[] spotLights) {
+        shader.bind();
+        shader.setUniform("projectionMatrix", Launcher.getWindow().updateProjectionMatrix());
+        RenderManager.renderLights(directionalLights, pointLights, spotLights, shader);
+
+        for (Model model : entities.keySet()) {
+            bind(model);
+            for (Entity e : entities.get(model)) {
+                // Calculez la distance entre la position de l'entité et la position de la caméra
+                float distance = e.getPosition().distance(camera.getPosition());
+                // Si la distance est inférieure au rayon spécifié, effectuez le rendu de l'entité
+                if (distance <= radius) {
+                    prepare(e, camera);
+                    GL11.glDrawElements(GL11.GL_TRIANGLES, model.getVertexCount(), GL11.GL_UNSIGNED_INT, 0);
+                }
+            }
+            unbind(model);
+        }
+        entities.clear();
+        shader.unbind();
+    }
+
     @Override
     public void bind(Model model) {
         GL30.glBindVertexArray(model.getId());

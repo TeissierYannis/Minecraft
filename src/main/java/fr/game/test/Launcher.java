@@ -13,7 +13,7 @@ public class Launcher {
     public static void main(String[] args) {
         System.out.println(Version.getVersion());
         window = new WindowManager(Consts.TITLE, 800, 600, true);
-        game = new TestGame();
+        game = TestGame.getInstance();
         EngineManager engine = new EngineManager();
         try {
             engine.start();
@@ -28,5 +28,16 @@ public class Launcher {
 
     public static TestGame getGame() {
         return game;
+    }
+
+    /**
+     * Create a static method that allow other thread to run code on the main thread
+     */
+    public static void runOnMainThread(Runnable runnable) {
+        if (Thread.currentThread() == window.getThread()) {
+            runnable.run();
+        } else {
+            window.runOnMainThread(runnable);
+        }
     }
 }

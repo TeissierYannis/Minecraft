@@ -6,6 +6,7 @@ import fr.game.core.entity.terrain.*;
 import fr.game.core.lightning.DirectionalLight;
 import fr.game.core.lightning.PointLight;
 import fr.game.core.lightning.SpotLight;
+import fr.game.core.listener.ChunkListener;
 import fr.game.core.rendering.RenderManager;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
@@ -23,6 +24,17 @@ public class TestGame implements ILogic {
     private Camera camera;
     private Vector3f cameraInc;
 
+    private World world;
+
+    // singleton instance
+    private static TestGame INSTANCE;
+
+    public static TestGame getInstance() {
+        if (INSTANCE == null) {
+            return new TestGame();
+        }
+        return INSTANCE;
+    }
 
     public TestGame() {
         renderer = new RenderManager();
@@ -31,72 +43,46 @@ public class TestGame implements ILogic {
         camera = new Camera();
         cameraInc = new Vector3f(0, 0, 0);
         sceneManager = new SceneManager(-90);
+        world = new World();
     }
 
     @Override
     public void init() throws Exception {
-        /*
-        BaseCube bc = new BaseCube();
-        List<Vector3f> pos = new ArrayList<>();
-
-        Random random = new Random();
-
-        Heightmap heightmap = new Heightmap(random.nextLong());
-        heightmap.genHeightmap();
-        heightmap.saveHeightmap("heightmap");
-
-        int[][] hm = heightmap.getHeightmap();
-
-        // create a terrain of 10x10
-        for (int x = 0; x < heightmap.CHUNK_WIDTH; x++) {
-            for (int z = 0; z < heightmap.CHUNK_WIDTH; z++) {
-                for (int y = 0; y < hm[x][z]; y++) {
-                    pos.add(new Vector3f(x, y, z));
-                }
-            }
-        }*/
-        // TODO : Procedural generation : https://www.youtube.com/watch?v=4hA7G3gup-4
-        // Try to generate 10 first chunk, 10 first rows and generate the rest
-        // TODO : Add a chunk manager to manage the chunks
-        // run in one thread
-        //new Thread(() -> bc.exportMultipleCubes("baseCube", pos)).start();
 
         int textureID = loader.loadTexture("textures/dirt_block.png");
         Texture dirtTexture = new Texture(textureID);
 
-        World world = new World();
-        world.init();
+        ChunkListener cl = (chunk, positions) -> {
+            chunk.generateModel(positions);
+            Model model = chunk.getModel();
+            if (model != null) {
+                Entity e = new Entity(
+                        model,
+                        new Vector3f(
+                                chunk.getCoords().getBottomLeft().x,
+                                0,
+                                chunk.getCoords().getBottomLeft().y
+                        ),
+                        new Vector3f(0, 0, 0),
+                        1
+                );
+                sceneManager.addEntity(e);
+            }
+        };
+
+        world.init(cl);
         world.save();
 
-        //Model m = loader.loadOBJModelFromFile("/models/baseCube.obj");
-        //m.setTexture(dirtTexture);
-
-        //Entity c = new Entity(m, new Vector3f(0, 0, 0), new Vector3f(0, 0, 0), 1);
-
-        //sceneManager.addEntity(c);
-
+        /*
        for (Chunk chunk : world.getChunks()) {
             Model model = chunk.getModel();
+            System.out.println("Chunk " + chunk.getCoords());
             if (model != null) {
                 model.setTexture(dirtTexture);
                 Entity c = new Entity(model, new Vector3f(chunk.getCoords().getBottomLeft().x, 0, chunk.getCoords().getBottomLeft().y), new Vector3f(0, 0, 0), 1);
                 sceneManager.addEntity(c);
             }
-        }
-
-        //Model model = loader.loadOBJModelFromFile("/models/baseCube.obj");
-
-        // setTexture(Vector4f ambientColor, Vector4f diffuseColor, Vector4f specularColor, float reflectance, Texture texture)
-        /*
-        model.setTexture(
-                new Texture(loader.loadTexture("textures/dirt_block.png")),
-                1
-        );
-
-        Entity e1 = new Entity(model, new Vector3f(0, 0, 0), new Vector3f(0, 0, 0), 1);
-
-        sceneManager.addEntity(e1);*/
-
+        }*/
 
         TerrainTexture backgroundTexture = new TerrainTexture(loader.loadTexture("textures/dirt_block.png"));
         TerrainTexture redTexture = new TerrainTexture(loader.loadTexture("textures/pack.png"));
@@ -146,7 +132,7 @@ public class TestGame implements ILogic {
     }
 
     @Override
-    public void input() {
+    public void input() throws Exception {
         cameraInc.set(0, 0, 0);
         if (window.isKeyPressed(GLFW.GLFW_KEY_W)) {
             camera.movePosition(0, 0, CAMERA_MOVE_SPEED);
@@ -167,11 +153,11 @@ public class TestGame implements ILogic {
             camera.movePosition(0, -CAMERA_MOVE_SPEED, 0);
         }
 
-
+        this.world.updateChunks(camera.getPosition());
     }
 
     @Override
-    public void update(MouseManager mouseInput) {
+    public void update(MouseManager mouseInput) throws Exception {
         camera.movePosition(cameraInc.x, cameraInc.y, cameraInc.z);
 
         if (mouseInput.isLeftButtonPressed()) {
@@ -212,5 +198,9 @@ public class TestGame implements ILogic {
     public void cleanup() {
         renderer.cleanup();
         loader.cleanup();
+    }
+
+    public Camera getCamera() {
+        return camera;
     }
 }
